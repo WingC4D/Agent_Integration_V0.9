@@ -2,6 +2,7 @@ import sys;
 import os;
 from dependencies.dependencies import types,run_python_file, system_prompt, load_dotenv, genai, functions_dict;
 
+AGENT_RUN_TIME: int = 20;
 class Gemini_Functions:
     def __init__(self: object):
         self.get_files_info: object = types.FunctionDeclaration(
@@ -126,53 +127,50 @@ def test_gemini_response() -> str:
             role = "user",
             parts = [types.Part(text= query)]
         )
-    ];
-    x: int = 20;
-    
-    for i in range(x):
-        print(f'Iteration: {i}')
+    ];    
+    i: int = 0;
+    while (i < AGENT_RUN_TIME):
+        i += 1; 
         response: object = client.models.generate_content(
-                model = 'gemini-2.0-flash-001',
+                model = 'gemini-1.0-flash',
                 contents = messages,
                 config = types.GenerateContentConfig(
                     tools = [available_funtions, ],
                     system_instruction = system_prompt
                 ),
             );
+        if (not response.candidates[0]) or (not response.candidates):
+            print(response.candidates[j].content.parts[0].text)
+            break;
         if response.function_calls:
             for j in range(len(response.function_calls)):
                 function_call_result:object = call_function(response.function_calls[j], verbose);
-                messages.append(response.candidates[j].content);
-                messages.append(function_call_result);
-                #print(f'Messages: {messages}\n');
-                if not (
-                    function_call_result and
-                    function_call_result.parts and
-                    len(function_call_result.parts) > 0 &
-                    hasattr(function_call_result.parts[0], 'function_response') &
-                    hasattr(function_call_result.parts[0].function_response, 'response')
+                messages.extend([response.candidates[j].content, function_call_result]);
+                if not (function_call_result and
+                        hasattr(function_call_result.parts[0].function_response, 'response')
                 ):
-                        raise Exception("Unexpected function call response structure from call_function")
-                print(f'Calling function: {response.function_calls[j].name}({response.function_calls[j].args})');           
-            
-            if (not response.candidates[0]) or (not response.candidates):
-                if (verbose):
-                    print(f'->{function_call_result.parts[0].function_response.response['result']}');
-                    break
-                else:
-                    print(f' - Calling function: {response.function_calls[i].name}\n=>Response: {function_call_result.parts[0].function_response.response['result']}')
-                    break
-    print(f'Called functions: {response.function_calls[i].name}({response.function_calls[i].args})\n-> {function_call_result.parts[0].function_response.response['result']}');      
-    if (verbose): 
-        print(f'User prompt: {query}\n\nPrompt tokens: {response.usage_metadata.prompt_token_count}\n\nResponse tokens: {response.usage_metadata.candidates_token_count}\n\nResponse: {response.text}');
-                
-        
-    
+                    raise Exception("Unexpected function call response structure from call_function");        
 
-    else: 
-        print(messages)
-        print(response.text);
+                if (verbose):
+                    
+                    print(f'Calling function: {response.function_calls[0].name}({response.function_calls[0].args})->{function_call_result.parts[0].function_response.response['result']}');
+                    break
+                
+                else:
+                    
+                    print(f'=>Response: {function_call_result.parts[0].function_response.response['result']}')
+                    break
+        elif (verbose): 
+            
+            print(f'User prompt: {query}\n\nPrompt tokens: {response.usage_metadata.prompt_token_count}\n\nResponse tokens: {response.usage_metadata.candidates_token_count}\n\nResponse: {response.text}');
+            return;    
+        
+        else:
+            
+            print(response.text);
+            return;
     
-    
+    print(f'Called functions: {[function.name for function in response.function_calls]}({[function.args for function in response.function_calls]})\n-> {[part.function_response.response['result'] for part in function_call_result]}');      
+
     print("exiting Convo")
     return;
