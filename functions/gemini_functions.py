@@ -17,7 +17,7 @@ class Gemini_Functions:
                     ),
                     "r_flag" : types.Schema(
                         type = types.Type.BOOLEAN,
-                        description = "a Bool value ues to set the function into recursive mode (i.e. List ALL files under working directory needs to be given permission to use it with a direct \"r_flag\" quote from user.\nExample: How's ??? function is implamented in file ?!?.py"
+                        description = "a Bool value ues to set the function into recursive mode (i.e. List ALL files under working directory needs to be given permission to use it with a direct \"use the r_flag\" from the user.\nExample: use the r_flag"
                     )
                 },
             ),
@@ -65,9 +65,10 @@ class Gemini_Functions:
                 },
             ),
         );
+        return;
 
 def call_function(function_call_part: object, verbose: bool = False):
-    print(function_call_part.args)
+    
     if not  function_call_part.name in functions_dict:
         return types.Content(
         role ="tool",
@@ -80,6 +81,7 @@ def call_function(function_call_part: object, verbose: bool = False):
             ),
         ],
     );
+    
     argumemts: dict = function_call_part.args.copy();
     argumemts['working_directory'] = '.';
     func: function = functions_dict[function_call_part.name];
@@ -132,16 +134,18 @@ def test_gemini_response() -> str:
     while (i < AGENT_RUN_TIME):
         i += 1; 
         response: object = client.models.generate_content(
-                model = 'gemini-1.0-flash',
+                model = 'gemini-2.0-flash-001',
                 contents = messages,
                 config = types.GenerateContentConfig(
                     tools = [available_funtions, ],
                     system_instruction = system_prompt
                 ),
             );
+
         if (not response.candidates[0]) or (not response.candidates):
             print(response.candidates[j].content.parts[0].text)
             break;
+
         if response.function_calls:
             for j in range(len(response.function_calls)):
                 function_call_result:object = call_function(response.function_calls[j], verbose);
@@ -158,7 +162,7 @@ def test_gemini_response() -> str:
                 
                 else:
                     
-                    print(f'=>Response: {function_call_result.parts[0].function_response.response['result']}')
+                    print(f'- {response.function_calls[0].name}:\n\n{function_call_result.parts[0].function_response.response['result']}\n')
                     break
         elif (verbose): 
             

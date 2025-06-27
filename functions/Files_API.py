@@ -54,6 +54,8 @@ def get_files_info_r(
     while directories_to_scan:
         scanned_directory: str = directories_to_scan.pop();
         for path in os.listdir(scanned_directory):
+            if (path.endswith('venv') | path.endswith('__pycache__') | path.endswith('.git')):
+                continue;
             abs_path: str = os.path.join(scanned_directory, path);
             if os.path.isdir(abs_path):
                 directories_to_scan.append(abs_path);
