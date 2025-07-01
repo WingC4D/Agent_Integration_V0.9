@@ -1,7 +1,6 @@
 import sys;
-import os;
+import os
 from dependencies.dependencies import types,run_python_file, system_prompt, load_dotenv, genai, functions_dict;
-
 AGENT_RUN_TIME: int = 20;
 class Gemini_Functions:
     def __init__(self: object):
